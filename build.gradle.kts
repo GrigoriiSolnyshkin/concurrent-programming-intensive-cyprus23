@@ -42,7 +42,7 @@ sourceSets.test {
 
 java {
     toolchain {
-        languageVersion.set(JavaLanguageVersion.of(13))
+        languageVersion.set(JavaLanguageVersion.of(17))
     }
 }
 

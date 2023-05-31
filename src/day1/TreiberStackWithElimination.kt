@@ -2,6 +2,7 @@ package day1
 
 import kotlinx.atomicfu.*
 import java.util.concurrent.*
+import javax.swing.CellEditor
 
 class TreiberStackWithElimination<E> : Stack<E> {
     private val stack = TreiberStack<E>()
@@ -16,7 +17,7 @@ class TreiberStackWithElimination<E> : Stack<E> {
     }
 
     private fun tryPushElimination(element: E): Boolean {
-        TODO("Implement me!")
+        // TODO("Implement me!")
         // TODO: Choose a random cell in `eliminationArray`
         // TODO: and try to install the element there.
         // TODO: Wait `ELIMINATION_WAIT_CYCLES` loop cycles
@@ -24,16 +25,48 @@ class TreiberStackWithElimination<E> : Stack<E> {
         // TODO: element. If so, clean the cell and finish,
         // TODO: returning `true`. Otherwise, move the cell
         // TODO: to the empty state and return `false`.
+
+        val cellIndex = randomCellIndex()
+        //val cell = eliminationArray[cellIndex]
+
+        while (true) {
+            if (eliminationArray[cellIndex].compareAndSet(CELL_STATE_EMPTY, element))
+                break
+            else return false
+        }
+
+        repeat(ELIMINATION_WAIT_CYCLES) {
+
+        }
+
+        if (eliminationArray[cellIndex].compareAndSet(element, CELL_STATE_EMPTY)) {
+            return false
+        }
+
+        eliminationArray[cellIndex].compareAndSet(CELL_STATE_RETRIEVED, CELL_STATE_EMPTY)
+        return true
+
     }
 
     override fun pop(): E? = tryPopElimination() ?: stack.pop()
 
     private fun tryPopElimination(): E? {
-        TODO("Implement me!")
+        // TODO("Implement me!")
         // TODO: Choose a random cell in `eliminationArray`
         // TODO: and try to retrieve an element from there.
         // TODO: On success, return the element.
         // TODO: Otherwise, if the cell is empty, return `null`.
+
+        val cellIndex = randomCellIndex()
+        // val cell = eliminationArray[cellIndex]
+
+        while (true) {
+            val curVal = eliminationArray[cellIndex].value ?: return null
+            if (curVal == CELL_STATE_RETRIEVED) return null
+            if (eliminationArray[cellIndex].compareAndSet(curVal, CELL_STATE_RETRIEVED)) {
+                return curVal as E
+            }
+        }
     }
 
     private fun randomCellIndex(): Int =
