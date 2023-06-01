@@ -1,8 +1,8 @@
 @file:Suppress("DuplicatedCode")
 
-package day3
+package day4
 
-import day3.AtomicCounterArray.Status.*
+import day4.AtomicCounterArray.Status.*
 import kotlinx.atomicfu.*
 
 // This implementation never stores `null` values.
@@ -38,7 +38,7 @@ class AtomicCounterArray(size: Int) {
         val index1: Int, val valueBeforeIncrement1: Int,
         val index2: Int, val valueBeforeIncrement2: Int
     ) {
-        val status = atomic<Status>(UNDECIDED)
+        val status = atomic(UNDECIDED)
 
         // TODO: Other threads can call this function
         // TODO: to help completing the operation.

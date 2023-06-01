@@ -80,6 +80,9 @@ class MSQueueWithLinearTimeRemove<E> : QueueWithRemove<E> {
      * DO NOT CHANGE THIS CODE.
      */
     override fun checkNoRemovedElements() {
+        check(tail.value.next.value == null) {
+            "tail.next must be null"
+        }
         var node = head.value
         // Traverse the linked list
         while (true) {

@@ -169,3 +169,60 @@ To test your solution, please run:
 
 * `./gradlew test --tests AtomicArrayWithCAS2Test` on Linux or MacOS
 * `gradlew test --tests AtomicArrayWithCAS2Test` on Windows
+
+
+## Day 4
+
+### Dynamic array of limited capacity
+
+In [`src/day4/DynamicArraySimplified.kt`](src/day4/DynamicArraySimplified.kt),
+implement a lock-free dynamic array of limited capacity.
+This is reminiscence of `vector` in C++ and `ArrayList` in Java,
+with the only difference that `addLast(element)` files and returns `false`
+if it would exceed the specified capacity.
+
+To test your solution, please run:
+
+* `./gradlew test --tests DynamicArraySimplifiedTest` on Linux or MacOS
+* `gradlew test --tests DynamicArraySimplifiedTest` on Windows
+
+### Dynamic array
+
+In [`src/day4/DynamicArray.kt`](src/day4/DynamicArray.kt),
+implement a lock-free dynamic array of unlimited capacity.
+To implement the resizing procedure, use the technique under
+the hood of the open addressing hash table.
+
+You do not need to implement an efficient cooperative elements
+transition; each thread is eligible to go over the whole array
+to guarantee that all elements are successfully moved to a new
+version of the array. While this strategy is inefficient in practice,
+it is good enough to learning new techniques.
+Implementing efficient cooperative elements transition may take weeks.
+
+To test your solution, please run:
+
+* `./gradlew test --tests DynamicArrayTest` on Linux or MacOS
+* `gradlew test --tests DynamicArrayTest` on Windows
+
+### Open-addressing hash table
+
+In [`src/day4/IntIntHashMap.kt`](src/day4/IntIntHashMap.kt),
+make the sequential open-addressing hash table linearizable and lock-free.
+
+1. The general code design should stay the same.
+2. Do not change the initial capacity (the `INITIAL_CAPACITY` field).
+3. The provided `IntIntHashMap` implementation always doubles the table size, even if the table is full of removed
+   elements. You do not need to fix this.
+4. In the class `IntIntHashMap.Core`, add a new `next: AtomicRef<Core>` field, which references the next version of the
+   table.
+5. `IntIntHashMap` supports only positive keys and values strictly lower `Int.MAX_VALUE`. Use negative numbers
+   and `Int.MAX_VALUE` for the algorithm needs.
+6. You do not need to implement cooperative rehashing.
+
+You might also be interested in the corresponding [academic paper](https://arxiv.org/pdf/cs/0303011.pdf).
+
+To test your solution, please run:
+
+* `./gradlew test --tests IntIntHashMapTest` on Linux or MacOS
+* `gradlew test --tests IntIntHashMapTest` on Windows

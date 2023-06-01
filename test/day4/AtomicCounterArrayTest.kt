@@ -1,18 +1,16 @@
-package day3
+package day4
 
 import TestBase
 import org.jetbrains.kotlinx.lincheck.annotations.*
 import org.jetbrains.kotlinx.lincheck.paramgen.*
 
 @Param(name = "index", gen = IntGen::class, conf = "0:${ARRAY_SIZE - 1}")
-class AtomicCounterArrayTest : TestBase(AtomicCounterArraySequential::class, checkObstructionFreedom = false) {
+class AtomicCounterArrayTest : TestBase(AtomicCounterArraySequential::class) {
     private val counters = AtomicCounterArray(ARRAY_SIZE)
 
-    @Synchronized
     @Operation
     fun get(@Param(name = "index") index: Int) = counters.get(index)
 
-    @Synchronized
     @Operation(handleExceptionsAsResult = [IllegalArgumentException::class])
     fun inc2(@Param(name = "index") index1: Int, @Param(name = "index") index2: Int) = counters.inc2(index1, index2)
 }
