@@ -7,7 +7,7 @@ import kotlinx.atomicfu.*
 
 // This implementation never stores `null` values.
 class AtomicCounterArray(size: Int) {
-    private val array = atomicArrayOfNulls<Int>(size)
+    private val array = atomicArrayOfNulls<Any>(size)
 
     init {
         // Fill array with zeros.
@@ -18,15 +18,44 @@ class AtomicCounterArray(size: Int) {
 
     fun get(index: Int): Int {
         // TODO: the cell can store a descriptor.
-        return array[index].value!!
+
+        val curRes = array[index].value
+        if (curRes is Int) return curRes
+        val curDescriptor = curRes as IncrementDescriptor
+        val stat = curDescriptor.status.value
+        return if (stat == SUCCESS) {
+            1 + if (curDescriptor.index1 == index) curDescriptor.valueBeforeIncrement1
+            else curDescriptor.valueBeforeIncrement2
+        } else {
+            if (curDescriptor.index1 == index) curDescriptor.valueBeforeIncrement1
+            else curDescriptor.valueBeforeIncrement2
+        }
     }
 
     fun inc2(index1: Int, index2: Int) {
-        require(index1 != index2) { "The indices should be different" }
+        if (index2 < index1)
+            return inc2(index2, index1)
+        require(index1 < index2) { "The indices should be different" }
         // TODO: This implementation is not linearizable!
         // TODO: Use `IncrementDescriptor` to perform the operation atomically.
-        array[index1].value = array[index1].value!! + 1
-        array[index2].value = array[index2].value!! + 1
+
+        while (true) {
+            val val1 = array[index1].value
+            if (val1 is IncrementDescriptor) {
+                val1.applyOperation()
+                continue
+            }
+            val val2 = array[index2].value
+            if (val2 is IncrementDescriptor) {
+                val2.applyOperation()
+                continue
+            }
+
+            val descriptor = IncrementDescriptor(index1, val1 as Int, index2, val2 as Int)
+            descriptor.applyOperation()
+            val res = descriptor.status.value
+            if (res == SUCCESS) return
+        }
     }
 
     // TODO: Implement the `inc2` operation using this descriptor.
@@ -39,12 +68,37 @@ class AtomicCounterArray(size: Int) {
         val index2: Int, val valueBeforeIncrement2: Int
     ) {
         val status = atomic(UNDECIDED)
-
-        // TODO: Other threads can call this function
-        // TODO: to help completing the operation.
         fun applyOperation() {
-            // TODO: Use the CAS2 algorithm, installing this descriptor
-            // TODO: in `array[index1]` and `array[index2]` cells.
+            if (this.status.value == FAILED) {
+                array[index2].compareAndSet(this, valueBeforeIncrement2)
+                array[index1].compareAndSet(this, valueBeforeIncrement1)
+                return
+            }
+            if (this.status.value == SUCCESS) {
+                array[index2].compareAndSet(this, valueBeforeIncrement2 + 1)
+                array[index1].compareAndSet(this, valueBeforeIncrement1 + 1)
+                return
+            }
+            if (!array[index1].compareAndSet(valueBeforeIncrement1, this) && array[index1].value != this) {
+                if (this.status.compareAndSet(UNDECIDED, FAILED)) {
+                    array[index2].compareAndSet(this, valueBeforeIncrement2)
+                    array[index1].compareAndSet(this, valueBeforeIncrement1)
+                }
+                return
+            }
+
+            if (!array[index2].compareAndSet(valueBeforeIncrement2, this) && array[index2].value != this) {
+                if (this.status.compareAndSet(UNDECIDED, FAILED)) {
+                    array[index2].compareAndSet(this, valueBeforeIncrement2)
+                    array[index1].compareAndSet(this, valueBeforeIncrement1)
+                }
+                return
+            }
+
+            if (this.status.compareAndSet(UNDECIDED, SUCCESS)) {
+                array[index2].compareAndSet(this, valueBeforeIncrement2 + 1)
+                array[index1].compareAndSet(this, valueBeforeIncrement1 + 1)
+            }
         }
     }
 
