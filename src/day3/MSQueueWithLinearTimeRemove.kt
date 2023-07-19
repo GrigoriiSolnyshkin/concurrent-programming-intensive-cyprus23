@@ -150,7 +150,6 @@ class MSQueueWithLinearTimeRemove<E> : QueueWithRemove<E> {
                 return false
             physicallyRemove()
             return true
-
         }
 
         fun physicallyRemove() : Boolean {
