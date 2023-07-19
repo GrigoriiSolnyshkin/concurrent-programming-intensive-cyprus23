@@ -22,8 +22,7 @@ class AtomicCounterArray(size: Int) {
         val curRes = array[index].value
         if (curRes is Int) return curRes
         val curDescriptor = curRes as IncrementDescriptor
-        val stat = curDescriptor.status.value
-        return if (stat == SUCCESS) {
+        return if (curDescriptor.status.value == SUCCESS) {
             1 + if (curDescriptor.index1 == index) curDescriptor.valueBeforeIncrement1
             else curDescriptor.valueBeforeIncrement2
         } else {
@@ -69,6 +68,7 @@ class AtomicCounterArray(size: Int) {
     ) {
         val status = atomic(UNDECIDED)
         fun applyOperation() {
+
             if (this.status.value == FAILED) {
                 array[index2].compareAndSet(this, valueBeforeIncrement2)
                 array[index1].compareAndSet(this, valueBeforeIncrement1)
@@ -79,25 +79,38 @@ class AtomicCounterArray(size: Int) {
                 array[index1].compareAndSet(this, valueBeforeIncrement1 + 1)
                 return
             }
+
             if (!array[index1].compareAndSet(valueBeforeIncrement1, this) && array[index1].value != this) {
                 if (this.status.compareAndSet(UNDECIDED, FAILED)) {
                     array[index2].compareAndSet(this, valueBeforeIncrement2)
                     array[index1].compareAndSet(this, valueBeforeIncrement1)
+                    return
                 }
-                return
             }
 
             if (!array[index2].compareAndSet(valueBeforeIncrement2, this) && array[index2].value != this) {
                 if (this.status.compareAndSet(UNDECIDED, FAILED)) {
                     array[index2].compareAndSet(this, valueBeforeIncrement2)
                     array[index1].compareAndSet(this, valueBeforeIncrement1)
+                    return
                 }
-                return
             }
 
             if (this.status.compareAndSet(UNDECIDED, SUCCESS)) {
                 array[index2].compareAndSet(this, valueBeforeIncrement2 + 1)
                 array[index1].compareAndSet(this, valueBeforeIncrement1 + 1)
+                return
+            }
+
+            if (this.status.value == FAILED) {
+                array[index2].compareAndSet(this, valueBeforeIncrement2)
+                array[index1].compareAndSet(this, valueBeforeIncrement1)
+                return
+            }
+            if (this.status.value == SUCCESS) {
+                array[index2].compareAndSet(this, valueBeforeIncrement2 + 1)
+                array[index1].compareAndSet(this, valueBeforeIncrement1 + 1)
+                return
             }
         }
     }
