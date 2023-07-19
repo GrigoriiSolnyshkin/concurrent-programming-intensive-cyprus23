@@ -10,15 +10,17 @@ class DynamicArraySimplified<E : Any>(
     private val size = atomic(0) // never decreases
 
     fun addLast(element: E): Boolean {
-        val curSize = size.value
-        if (curSize == capacity) return false
-        // TODO: you need to install the element and
-        // TODO: increment the size atomically.
-        // TODO: You are NOT allowed to use CAS2,
-        // TODO: there is a more efficient and smarter solution!
-        array[curSize].value = element
-        size.value = size.value + 1
-        return true
+        while (true) {
+            val curSize = size.value
+            if (curSize == capacity) return false
+
+            if (array[curSize].compareAndSet(null, element)) {
+                size.compareAndSet(curSize, curSize + 1)
+                return true
+            } else {
+                size.compareAndSet(curSize, curSize + 1)
+            }
+        }
     }
 
     fun set(index: Int, element: E) {
