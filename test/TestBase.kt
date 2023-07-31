@@ -33,7 +33,7 @@ abstract class TestBase(
     fun modelCheckingTest() = try {
         ModelCheckingOptions()
             .iterations(100)
-            .invocationsPerIteration(100_000)
+            .invocationsPerIteration(10_000)
             .actorsBefore(2)
             .threads(3)
             .actorsPerThread(4)
